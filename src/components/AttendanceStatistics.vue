@@ -6,27 +6,28 @@
         :props="defaultProps"
         @node-click="handleNodeClick"
         default-expand-all
+        :expand-on-click-node="false"
       />
     </div>
     <div class="right-panel">
       <div class="stats-cards">
         <el-card class="stats-card">
-          <div class="stats-title">项目人员情况统计</div>
-          <div class="stats-number">{{ currentStats.realTime}}</div>
+          <div class="stats-title" style="color: black;">项目人员情况统计</div>
+          <div class="stats-number" style="color: black;">{{ currentStats.realTime}}</div>
         </el-card>
-        <el-card class="stats-card">
+        <el-card class="stats-card" style="background-image: linear-gradient(to right, #ff8177 0%, #ff867a 0%, #ff8c7f 21%, #f99185 52%, #cf556c 78%, #b12a5b 100%);">
           <div class="stats-title">总人数</div>
           <div class="stats-number">{{ currentStats.total }}</div>
         </el-card>
-        <el-card class="stats-card">
+        <el-card class="stats-card" style="background-image: linear-gradient(to top, #48c6ef 0%, #6f86d6 100%);">
           <div class="stats-title">到岗人数</div>
           <div class="stats-number">{{ currentStats.onDuty }}</div>
         </el-card>
-        <el-card class="stats-card">
+        <el-card class="stats-card" style="background-image: linear-gradient(-60deg, #16a085 0%, #f4d03f 100%);">
           <div class="stats-title">缺勤人数</div>
           <div class="stats-number">{{ currentStats.absent }}</div>
         </el-card>
-        <el-card class="stats-card">
+        <el-card class="stats-card" style="background-image: linear-gradient(120deg, #f6d365 0%, #fda085 100%);">
           <div class="stats-title">迟到人数</div>
           <div class="stats-number">{{ currentStats.late }}</div>
         </el-card>
@@ -183,14 +184,14 @@ export default {
 
 .stats-title{
     font-size: 16px;
-    color: #666;
+    color: #fff;
 }
 
 .stats-number {
   font-size: 24px;
   font-weight: bold;
   margin-top: 10px;
-  color: #409EFF;
+  color: #fff;
 }
 
 .chart-container {
