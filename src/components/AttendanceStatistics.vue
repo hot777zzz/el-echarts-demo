@@ -4,8 +4,8 @@
       <el-tree
         :data="orgTree"
         :props="defaultProps"
-        default-expand-all
         @node-click="handleNodeClick"
+        default-expand-all
       />
     </div>
     <div class="right-panel">
@@ -39,8 +39,25 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import VChart from 'vue-echarts';
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { BarChart } from 'echarts/charts';
+import { 
+  GridComponent,
+  TooltipComponent,
+  LegendComponent 
+} from 'echarts/components';
+import { getOrgTree, getAttendanceStats, getSiteStats } from '../attendanceService';
+
+use([
+  CanvasRenderer,
+  BarChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent
+]);
 
 export default {
   name: 'AttendanceStatistics',
@@ -50,7 +67,7 @@ export default {
   setup() {
     //组织架构树
     const orgTree = ref([]);
-    //点击后对应统计数据
+    //对应统计数据
     const currentStats = ref({
       total: 0,
       onDuty: 0,
@@ -98,10 +115,28 @@ export default {
         }
       ]
     });
-    const handleNodeClick = (data) => {
-      console.log(data)
-   
-    }
+
+    const updateChart = (orgId) => {
+      const siteStats = getSiteStats(orgId);
+      chartOption.value.xAxis.data = siteStats.map(site => site.name);
+      chartOption.value.series[0].data = siteStats.map(site => site.onDuty);
+      chartOption.value.series[1].data = siteStats.map(site => site.absent);
+      chartOption.value.series[2].data = siteStats.map(site => site.late);
+    };
+
+    const handleNodeClick = (node) => {
+      currentStats.value = getAttendanceStats(node.id);
+      updateChart(node.id);
+    };
+
+    onMounted(() => {
+      orgTree.value = getOrgTree();
+      // 初始化显示全部统计
+      currentStats.value = getAttendanceStats('1');
+      updateChart('1');
+      console.log(orgTree.value);
+    });
+
     return {
       orgTree,
       defaultProps,

@@ -71,3 +71,125 @@ const attendanceData = [
   { id: 37, userId: '320321', userName: '施三十六', orgId: '1000400010002', realTime: '2024-09-29', time: null }
 ];
 
+/**
+ * 构建树形结构
+ * @returns {Array} 将返回树形结构的组织数据
+ * @description 将扁平的组织数据转换为树形结构，用于树形控件展示
+ */
+export function getOrgTree() {
+  // 递归构建树形结构
+  const buildTree = (items, pid) => {
+    return items
+      // 过滤出当前层级的节点
+      .filter(item => item.pid === pid)
+      // 转换节点格式，添加子节点
+      .map(item => ({
+        ...item,
+        label: item.name, // 用于树形控件显示的标签
+        children: buildTree(items, item.id) // 递归构建子节点
+      }))
+      // 按idx排序
+      .sort((a, b) => a.idx - b.idx);
+  };
+
+  return buildTree(orgData, '0');
+}
+
+/**
+ * 获取指定组织及其所有子组织ID
+ * @param {string} orgId 组织ID
+ * @returns {Array<string>} 返回包含自身及所有子组织的ID数组
+ * @description 用于获取某个组织节点下的所有子节点ID，包括自身
+ */
+function getAllSubOrgs(orgId) {
+  const result = [orgId];
+  // 递归查找子组织
+  const findChildren = (pid) => {
+    const children = orgData.filter(org => org.pid === pid);
+    children.forEach(child => {
+      result.push(child.id);
+      findChildren(child.id); // 递归查找下一层
+    });
+  };
+  findChildren(orgId);
+  return result;
+}
+
+/**
+ * 获取考勤统计数据
+ * @param {string} orgId 组织ID
+ * @returns {Object} 返回统计结果
+ * @description 统计指定组织及其下属组织的考勤数据
+ * @returns {Object} {
+ *   total: 总人数,
+ *   onDuty: 到岗人数,
+ *   late: 迟到人数,
+ *   absent: 缺勤人数
+ * }
+ */
+export function getAttendanceStats(orgId) {
+  // 获取所有相关组织ID
+  const subOrgs = getAllSubOrgs(orgId);
+  // 筛选相关记录
+  const relevantRecords = attendanceData.filter(record => subOrgs.includes(record.orgId));
+  
+  // 计算统计数据
+  const total = relevantRecords.length; // 总人数
+  const onDuty = relevantRecords.filter(record => record.time).length; // 到岗人数（包括迟到）
+  const late = relevantRecords.filter(record => {
+    if (!record.time) return false;
+    const checkInTime = new Date(record.time).getHours();
+    return checkInTime >= 9; // 9点及以后算迟到
+  }).length;
+  const absent = total - onDuty; // 缺勤人数（未打卡）
+  const unique = (arr)=> {
+    return Array.from(new Set(arr))
+  }//去重方法
+  const realTime = unique(relevantRecords.map(record => record.realTime)).join(',');//项目时间
+  return {
+    total,//总人数
+    onDuty,//到岗人数
+    late,//迟到人数
+    absent,//缺勤人数
+    realTime//项目时间
+  };
+}
+
+/**
+ * 获取驻点统计数据
+ * @param {string} orgId 组织ID
+ * @returns {Array<Object>} 返回驻点统计数据数组
+ * @description 统计指定组织下所有驻点的考勤数据，用于图表展示
+ * @returns {Array<Object>} [{
+ *   name: 驻点名称,
+ *   onDuty: 到岗人数,
+ *   late: 迟到人数,
+ *   absent: 缺勤人数
+ * }]
+ */
+export function getSiteStats(orgId) {
+  // 获取所有相关组织ID
+  const subOrgs = getAllSubOrgs(orgId);
+  // 筛选出所有驻点（orgType=3）
+  const sites = orgData.filter(org => org.orgType === 3 && subOrgs.includes(org.id));
+  
+  // 统计每个驻点的数据
+  return sites.map(site => {
+    // 获取当前驻点的所有考勤记录
+    const siteRecords = attendanceData.filter(record => record.orgId === site.id);
+    
+    return {
+      name: site.name,
+      // 到岗人数（有打卡时间的）
+      onDuty: siteRecords.filter(record => record.time).length,
+      // 迟到人数（9点后打卡的）
+      late: siteRecords.filter(record => {
+        if (!record.time) return false;
+        const checkInTime = new Date(record.time).getHours();
+        return checkInTime >= 9;
+      }).length,
+      // 缺勤人数（没有打卡时间的）
+      absent: siteRecords.filter(record => !record.time).length
+    };
+  });
+} 
