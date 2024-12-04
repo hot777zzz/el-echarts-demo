@@ -5,6 +5,7 @@
         :data="orgTree"
         :props="defaultProps"
         default-expand-all
+        @node-click="handleNodeClick"
       />
     </div>
     <div class="right-panel">
@@ -97,14 +98,16 @@ export default {
         }
       ]
     });
-
+    const handleNodeClick = (data) => {
+      console.log(data)
    
-
+    }
     return {
       orgTree,
       defaultProps,
       currentStats,
       chartOption,
+      handleNodeClick
     };
   }
 }
